@@ -81,4 +81,3 @@ submission$load <- forecast_values
 write.csv(submission, "seasonal_naive_model.csv", row.names = FALSE)
 ```
 
-# something
