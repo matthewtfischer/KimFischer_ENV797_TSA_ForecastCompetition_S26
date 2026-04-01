@@ -29,17 +29,55 @@ library(tseries)
 library(tidyverse)
 library(smooth)
 
-#New package for M9 to assist with tables
-#install.packages("kableExtra")
 library(kableExtra)
-
+library(readxl)
+library(openxlsx)
 ```
 
 ## Importing data
 
 ```{r}
+daily_data <- data %>%
+  mutate(
+    date = as.Date(date),
+    Year = year(date),
+    Month = month(date),
+    Day = day(date)
+  ) %>%
+  
+  rowwise() %>%
+  mutate(
+    daily_avg = mean(c_across(h1:h24), na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  
+  select(meter_id, date, Year, Month, Day, daily_avg)
 
+daily_data <- daily_data %>%
+  filter(!is.na(daily_avg), !is.nan(daily_avg), is.finite(daily_avg))
 ```
 
+```{r}
+ggplot(daily_data, aes(x = date, y = daily_avg)) +
+  geom_line() +
+  labs(title = "Daily Average Load", y = "Daily Average", x = "Date")
+```
 
-# something random
+```{r}
+data_ts <- msts(daily_data$daily_avg, 
+                            seasonal.periods =c(7, 365),
+                            start=c(2005,01))
+
+SNAIVE_data <- snaive(data_ts, h=31)
+plot(SNAIVE_data)
+
+forecast_values <- as.numeric(SNAIVE_data$mean)
+```
+
+```{r}
+submission <- read.csv("submission_template.csv")
+
+submission$load <- forecast_values
+write.csv(submission, "seasonal_naive_model.csv", row.names = FALSE)
+```
+
