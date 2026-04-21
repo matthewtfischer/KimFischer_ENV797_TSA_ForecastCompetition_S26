@@ -158,7 +158,8 @@ write.csv(submission, "model 1 submission.csv", row.names = FALSE)
 print("Saved model 1 submission.csv")
 ```
 
-## Model 2: 
+## Model 2: STLF-ARIMA
+Score on Kaggle:  0.1315
 
 ```{r model2, message=FALSE, warning=FALSE}
 # --- Model 2: STLF (with ARIMA) Final Forecast ---
@@ -170,4 +171,17 @@ submission$load <- as.numeric(forecast_arima_full$mean)
 write.csv(submission, "model 2 submission.csv", row.names = FALSE)
 print("Saved model 2 submission.csv")
 ```
+
+## Model 3: STLF + ETS
+
+```{r model 3, message=FALSE, warning=FALSE}
+# --- Model 3: STLF with ETS (Exponential Smoothing) ---
+print("Fitting STLF (ETS)...")
+forecast_ets_full <- stlf(full_ts, method = "ets", h = 31)
+
+submission$load <- as.numeric(forecast_ets_full$mean)
+write.csv(submission, "model 3 submission.csv", row.names = FALSE)
+print("Saved model 3 submission.csv")
+```
+
 
