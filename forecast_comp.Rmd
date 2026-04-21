@@ -7,6 +7,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Data Wrangling and Vanila Model
+
 ## Setting R code chunk options
 
 First R code chunk is used for setting the options for all R code chunks. The choice echo=TRUE means both code and output will appear on report, include = FALSE neither code nor output is printed.
@@ -37,6 +39,8 @@ library(openxlsx)
 ## Importing data
 
 ```{r}
+data <- read_excel("load.xlsx")
+
 daily_data <- data %>%
   mutate(
     date = as.Date(date),
@@ -79,5 +83,75 @@ submission <- read.csv("submission_template.csv")
 
 submission$load <- forecast_values
 write.csv(submission, "seasonal_naive_model.csv", row.names = FALSE)
+```
+
+# External Variables and Train/Test Split
+
+## Temperature, Humidity Data Wrangling
+
+```{r external_data, message=FALSE, warning=FALSE}
+
+temp <- read_excel("temperature.xlsx")
+humid <- read_excel("relative_humidity.xlsx")
+
+# daliy avg of temp
+temp_daily <- temp %>%
+  mutate(date = as.Date(date)) %>%
+  rowwise() %>%
+  # hourly avg of all t_ws1 ~ t_ws28
+  mutate(hourly_temp_avg = mean(c_across(starts_with("t_ws")), na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(date) %>%
+  # daily avg
+  summarise(daily_temp = mean(hourly_temp_avg, na.rm = TRUE))
+
+# daliy avg of humid 
+humid_daily <- humid %>%
+  mutate(date = as.Date(date)) %>%
+  rowwise() %>%
+  # hourly avg of all rh_ws1 ~ rh_ws28
+  mutate(hourly_humid_avg = mean(c_across(starts_with("rh_ws")), na.rm = TRUE)) %>%
+  ungroup() %>%
+  group_by(date) %>%
+  # daily avg
+  summarise(daily_humid = mean(hourly_humid_avg, na.rm = TRUE))
+
+# Join the data
+daily_data <- daily_data %>%
+  left_join(temp_daily, by = "date") %>%
+  left_join(humid_daily, by = "date")
+
+head(daily_data)
+```
+
+## Train and Validation Split
+
+```{r train_validation_split, message=FALSE, warning=FALSE}
+# Training = 2005-01-01 to 2010-06-30 / Validation = 2010-07-01 to 2010-07-31
+train_data <- daily_data %>% filter(date >= as.Date("2005-01-01") & date <= as.Date("2010-06-30"))
+valid_data <- daily_data %>% filter(date >= as.Date("2010-07-01") & date <= as.Date("2010-07-31"))
+
+# Create msts (Multi-Seasonal Time Series) objects for training and validation
+# Apply weekly (7) and yearly (365) seasonal periods
+train_ts <- msts(train_data$daily_avg, seasonal.periods = c(7, 365), start = c(2005, 1))
+valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2010, 182)) 
+# 182 represents the approximate day of the year for July 1st
+```
+
+# Forecast Models
+
+```{r final_kaggle_submission, message=FALSE, warning=FALSE}
+# 1. Create msts object using the FULL dataset (Jan 2005 - Jun 2011)
+full_ts <- msts(daily_data$daily_avg, seasonal.periods = c(7, 365), start = c(2005, 1))
+
+# --- Model 1: TBATS Final Forecast ---
+print("Retraining TBATS on full data...")
+fit_tbats_full <- tbats(full_ts)
+forecast_tbats_full <- forecast(fit_tbats_full, h = 31)
+
+# Save TBATS prediction to CSV
+submission$load <- as.numeric(forecast_tbats_full$mean)
+write.csv(submission, "model 1 submission.csv", row.names = FALSE)
+print("Saved model_1_submission.csv")
 ```
 
