@@ -138,7 +138,11 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 # 182 represents the approximate day of the year for July 1st
 ```
 
-# 3. Forecast Models and Scores
+# 3. Top 5 Models
+
+
+
+# APPENDIX. Forecast Models and Scores
 
 ## Model 1 : TBATS 
 Score on Kaggle: 0.1021
@@ -323,3 +327,154 @@ write.csv(submission, "model 8 submission.csv", row.names = FALSE)
 print("Saved model 8 submission.csv")
 ```
 
+```{r prophet_visualization, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+# 1. Plot the main forecast with historical data and confidence intervals
+# Black dots: Actual historical load
+# Blue line: Prophet's predicted load
+# Light blue shaded area: Uncertainty intervals (Confidence intervals)
+print("Plotting the main Prophet forecast...")
+plot(m, forecast_prophet) + 
+  ggtitle("Prophet Forecast for Daily Load") +
+  xlab("Date") + ylab("Daily Average Load")
+
+# 2. Plot the individual components (Trend, Weekly, and Yearly seasonality)
+prophet_plot_components(m, forecast_prophet)
+```
+
+## Model 9: Prophet + Temp data
+Score on Kaggle: 0.1052
+
+```{r prophet_with_regressor, message=FALSE, warning=FALSE}
+library(prophet)
+
+print("Preparing data for Prophet with Temperature...")
+# 1. Prepare data with both target (y) and the external regressor (temp)
+df_prophet_reg <- data.frame(
+  ds = daily_data$date, 
+  y = daily_data$daily_avg,
+  temp = daily_data$daily_temp # Adding historical temperature
+)
+
+# 2. Initialize Prophet and ADD the regressor BEFORE fitting
+m_reg <- prophet(yearly.seasonality = TRUE, 
+                 weekly.seasonality = TRUE, 
+                 daily.seasonality = FALSE)
+m_reg <- add_regressor(m_reg, 'temp')
+
+print("Fitting Prophet Model with Temperature Regressor...")
+m_reg <- fit.prophet(m_reg, df_prophet_reg)
+
+# 3. Create future dataframe
+future_dates_reg <- make_future_dataframe(m_reg, periods = 31)
+all_temp <- c(daily_data$daily_temp, future_temp)
+future_dates_reg$temp <- all_temp
+
+# 5. Generate the final forecast
+forecast_prophet_reg <- predict(m_reg, future_dates_reg)
+
+# 6. Extract predictions and save for Kaggle
+prophet_reg_predictions <- tail(forecast_prophet_reg$yhat, 31)
+
+submission$load <- prophet_reg_predictions
+write.csv(submission, "model 9 submission.csv", row.names = FALSE)
+print("Saved model 9 submission.csv")
+```
+
+## Model 10: Prophet + ARIMAX
+Score on Kaggle: 0.1488
+
+```{r}
+ensemble_ultimate <- (prophet_reg_predictions +       
+                      as.numeric(forecast_arimax_final$mean)) / 2
+
+submission$load <- ensemble_ultimate
+write.csv(submission, "model 10 submission.csv", row.names = FALSE)
+print("Saved model 10 submission.csv")
+```
+
+## Model 11: Prophet + US Holiday
+Score on Kaggle: 0.0971
+
+```{r prophet_with_holidays_only, message=FALSE, warning=FALSE}
+
+# 1. Prepare data
+df_prophet_holidays <- data.frame(
+  ds = daily_data$date, 
+  y = daily_data$daily_avg
+)
+
+# 2. Initialize Prophet
+m_holidays <- prophet(yearly.seasonality = TRUE, 
+                      weekly.seasonality = TRUE, 
+                      daily.seasonality = FALSE)
+
+# Add US country holidays (e.g., Independence Day on July 4th)
+m_holidays <- add_country_holidays(m_holidays, country_name = 'US')
+m_holidays <- fit.prophet(m_holidays, df_prophet_holidays)
+
+
+# 3. Create future dataframe for July 2011 (31 days)
+future_dates_holidays <- make_future_dataframe(m_holidays, periods = 31)
+
+# 4. Generate the final forecast
+print("Forecasting with Holidays...")
+forecast_prophet_holidays <- predict(m_holidays, future_dates_holidays)
+
+# 5. Extract predictions
+prophet_holidays_predictions <- tail(forecast_prophet_holidays$yhat, 31)
+
+submission$load <- prophet_holidays_predictions
+write.csv(submission, "model 11 submission.csv", row.names = FALSE)
+
+print("Saved model 11 submission.csv")
+```
+
+## Model 12: Prophet + Parameter tuning
+Score on Kaggle: 0.0966
+
+```{r prophet_tuned, message=FALSE, warning=FALSE}
+# 1. Initialize Prophet with custom hyperparameters
+# Increased yearly seasonality flexibility (15 instead of default 10)
+# changepoint.prior.scale = 0.1 allows the trend to adapt faster
+m_tuned <- prophet(yearly.seasonality = 15, 
+                   weekly.seasonality = TRUE, 
+                   daily.seasonality = FALSE,
+                   changepoint.prior.scale = 0.1)
+
+# Add US holidays
+m_tuned <- add_country_holidays(m_tuned, country_name = 'US')
+
+# 2. Fit and Predict
+m_tuned <- fit.prophet(m_tuned, df_prophet_holidays)
+future_tuned <- make_future_dataframe(m_tuned, periods = 31)
+forecast_tuned <- predict(m_tuned, future_tuned)
+
+# 3. Extract and Save
+prophet_tuned_preds <- tail(forecast_tuned$yhat, 31)
+
+submission$load <- prophet_tuned_preds
+write.csv(submission, "model 12 submission.csv", row.names = FALSE)
+
+print("Saved model 12 submission.csv")
+```
+
+## Model 13: Top 2 Weighted Ensemble
+Score on Kaggle:
+
+```{r final_weighted_ensemble, message=FALSE, warning=FALSE}
+# Model A (Rank 1): Tuned Prophet + Holidays (70% weight)
+weight_best <- 0.70
+
+# Model B (Rank 2): Base Prophet + Holidays (30% weight)
+weight_second <- 0.30
+
+# Calculate the weighted average of the predictions
+weighted_ensemble_preds <- (weight_best * prophet_tuned_preds) + 
+                           (weight_second * prophet_holidays_predictions)
+
+# Load the submission template and save the final ensemble forecast
+submission$load <- weighted_ensemble_preds
+write.csv(submission, "model 13 submission.csv", row.names = FALSE)
+print("Saved model 13 submission.csv")
