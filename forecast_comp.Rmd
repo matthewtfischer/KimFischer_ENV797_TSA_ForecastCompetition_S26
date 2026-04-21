@@ -225,3 +225,30 @@ write.csv(submission, "model 4-3 submission.csv", row.names = FALSE)
 print("Saved model 4-3 submission.csv")
 ```
 
+## Model 5: NNAR
+Score on Kaggle: 0.1770
+
+```{r}
+# --- Model 5: NNAR (Neural Network Time Series Forecast) ---
+fit_nnar <- nnetar(full_ts)
+forecast_nnar <- forecast(fit_nnar, h = 31)
+
+submission$load <- as.numeric(forecast_nnar$mean)
+write.csv(submission, "model 5 submission.csv", row.names = FALSE)
+print("Saved model 5 submission.csv")
+```
+
+## Model 6: Ensemble Model (Averaging the best outputs)
+Score on Kaggle: 0.1211
+
+```{r}
+# Averaging the predictions of TBATS, STLF(ARIMA), and STLF(ETS)
+ensemble_mean <- (as.numeric(forecast_tbats_full$mean) +
+                  as.numeric(forecast_arima_full$mean) + 
+                  as.numeric(forecast_ets_full$mean)) / 3
+
+submission$load <- ensemble_mean
+write.csv(submission, "model 6 submission.csv", row.names = FALSE)
+print("Saved model 6 submission.csv")
+```
+
