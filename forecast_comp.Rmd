@@ -461,7 +461,7 @@ print("Saved model 12 submission.csv")
 ```
 
 ## Model 13: Top 2 Weighted Ensemble
-Score on Kaggle:
+Score on Kaggle: 0.966
 
 ```{r final_weighted_ensemble, message=FALSE, warning=FALSE}
 # Model A (Rank 1): Tuned Prophet + Holidays (70% weight)
@@ -478,3 +478,4 @@ weighted_ensemble_preds <- (weight_best * prophet_tuned_preds) +
 submission$load <- weighted_ensemble_preds
 write.csv(submission, "model 13 submission.csv", row.names = FALSE)
 print("Saved model 13 submission.csv")
+```
