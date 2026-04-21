@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Data Wrangling and Vanila Model
+# 1. Data Wrangling and Vanila Model
 
 ## Setting R code chunk options
 
@@ -85,7 +85,7 @@ submission$load <- forecast_values
 write.csv(submission, "seasonal_naive_model.csv", row.names = FALSE)
 ```
 
-# External Variables and Train/Test Split
+# 2. External Variables and Train/Test Split
 
 ## Temperature, Humidity Data Wrangling
 
@@ -138,7 +138,7 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 # 182 represents the approximate day of the year for July 1st
 ```
 
-# Forecast Models
+# 3. Forecast Models and Scores
 
 ## Model 1 : TBATS 
 Score on Kaggle: 0.1021
@@ -163,7 +163,6 @@ Score on Kaggle:  0.1315
 
 ```{r model2, message=FALSE, warning=FALSE}
 # --- Model 2: STLF (with ARIMA) Final Forecast ---
-print("Retraining STLF (ARIMA) on full data...")
 forecast_arima_full <- stlf(full_ts, method = "arima", h = 31)
 
 # Save STLF-ARIMA prediction to CSV
@@ -173,10 +172,10 @@ print("Saved model 2 submission.csv")
 ```
 
 ## Model 3: STLF + ETS
+Score on Kaggle: 0.1330
 
 ```{r model 3, message=FALSE, warning=FALSE}
 # --- Model 3: STLF with ETS (Exponential Smoothing) ---
-print("Fitting STLF (ETS)...")
 forecast_ets_full <- stlf(full_ts, method = "ets", h = 31)
 
 submission$load <- as.numeric(forecast_ets_full$mean)
@@ -184,4 +183,45 @@ write.csv(submission, "model 3 submission.csv", row.names = FALSE)
 print("Saved model 3 submission.csv")
 ```
 
+## Model 4-1: ARIMA + Fourier terms using K = c(3,10)
+Score on Kaggle: 0.1350
+
+```{r}
+# --- Model 4: Harmonic Regression (ARIMA with Fourier terms) ---
+# Using K = c(3, 10)
+fit_fourier <- auto.arima(full_ts, seasonal = FALSE, xreg = fourier(full_ts, K = c(3, 10)))
+forecast_fourier <- forecast(fit_fourier, xreg = fourier(full_ts, K = c(3, 10), h = 31))
+
+submission$load <- as.numeric(forecast_fourier$mean)
+write.csv(submission, "model 4-1 submission.csv", row.names = FALSE)
+print("Saved model 4-1 submission.csv")
+```
+
+## Model 4-2: ARIMA + Fourier terms using K = c(3,15)
+Score on Kaggle: 1.484
+
+```{r}
+# --- Model 4: Harmonic Regression (ARIMA with Fourier terms) ---
+# Using K = c(3, 15)
+fit_fourier <- auto.arima(full_ts, seasonal = FALSE, xreg = fourier(full_ts, K = c(3, 15)))
+forecast_fourier <- forecast(fit_fourier, xreg = fourier(full_ts, K = c(3, 15), h = 31))
+
+submission$load <- as.numeric(forecast_fourier$mean)
+write.csv(submission, "model 4-2 submission.csv", row.names = FALSE)
+print("Saved model 4-2 submission.csv")
+```
+
+## Model 4-3: ARIMA + Fourier terms using K = c(2,5)
+Score on Kaggle: 0.1469
+
+```{r}
+# --- Model 4: Harmonic Regression (ARIMA with Fourier terms) ---
+# Using K = c(2, 5)
+fit_fourier <- auto.arima(full_ts, seasonal = FALSE, xreg = fourier(full_ts, K = c(2, 5)))
+forecast_fourier <- forecast(fit_fourier, xreg = fourier(full_ts, K = c(2, 5), h = 31))
+
+submission$load <- as.numeric(forecast_fourier$mean)
+write.csv(submission, "model 4-3 submission.csv", row.names = FALSE)
+print("Saved model 4-3 submission.csv")
+```
 
