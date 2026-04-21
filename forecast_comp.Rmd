@@ -140,8 +140,11 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 
 # Forecast Models
 
-```{r final_kaggle_submission, message=FALSE, warning=FALSE}
-# 1. Create msts object using the FULL dataset (Jan 2005 - Jun 2011)
+## Model 1 : TBATS 
+Score on Kaggle: 0.1021
+
+```{r model1, message=FALSE, warning=FALSE}
+# Create msts object using the FULL dataset (Jan 2005 - Jun 2011)
 full_ts <- msts(daily_data$daily_avg, seasonal.periods = c(7, 365), start = c(2005, 1))
 
 # --- Model 1: TBATS Final Forecast ---
@@ -152,6 +155,19 @@ forecast_tbats_full <- forecast(fit_tbats_full, h = 31)
 # Save TBATS prediction to CSV
 submission$load <- as.numeric(forecast_tbats_full$mean)
 write.csv(submission, "model 1 submission.csv", row.names = FALSE)
-print("Saved model_1_submission.csv")
+print("Saved model 1 submission.csv")
+```
+
+## Model 2: 
+
+```{r model2, message=FALSE, warning=FALSE}
+# --- Model 2: STLF (with ARIMA) Final Forecast ---
+print("Retraining STLF (ARIMA) on full data...")
+forecast_arima_full <- stlf(full_ts, method = "arima", h = 31)
+
+# Save STLF-ARIMA prediction to CSV
+submission$load <- as.numeric(forecast_arima_full$mean)
+write.csv(submission, "model 2 submission.csv", row.names = FALSE)
+print("Saved model 2 submission.csv")
 ```
 
