@@ -288,4 +288,38 @@ print("Saved model 7 submission.csv")
 ```
 
 ## Model 8: Prophet
+Score on Kaggle: 0.0973
+
+```{r prophet_model, message=FALSE, warning=FALSE}
+# Load the prophet library
+library(prophet)
+
+# 1. Prepare the dataframe in the specific format required by Prophet
+df_prophet <- data.frame(ds = daily_data$date, y = daily_data$daily_avg)
+
+# 2. Initialize and fit the Prophet model
+# We enable yearly and weekly seasonality. 
+# daily.seasonality is set to FALSE because we are working with daily aggregated data.
+m <- prophet(yearly.seasonality = TRUE, 
+             weekly.seasonality = TRUE, 
+             daily.seasonality = FALSE)
+
+m <- fit.prophet(m, df_prophet)
+
+# 3. Create a dataframe for future dates (Next 31 days for July 2011)
+future_dates <- make_future_dataframe(m, periods = 31)
+
+# 4. Generate the forecast
+forecast_prophet <- predict(m, future_dates)
+
+# Extract only the forecasted values ('yhat') for the last 31 days (July 2011)
+prophet_predictions <- tail(forecast_prophet$yhat, 31)
+
+# 5. Save the final predictions
+submission <- read.csv("submission_template.csv")
+submission$load <- prophet_predictions
+write.csv(submission, "model 8 submission.csv", row.names = FALSE)
+
+print("Saved model 8 submission.csv")
+```
 
