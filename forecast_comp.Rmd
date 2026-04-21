@@ -252,3 +252,40 @@ write.csv(submission, "model 6 submission.csv", row.names = FALSE)
 print("Saved model 6 submission.csv")
 ```
 
+## Model 7: ARIMAX with temperature forecast
+Score on Kaggle: 0.2172
+
+```{r arimax_with_temp_forecast, message=FALSE, warning=FALSE}
+
+# Create a time series object for the historical daily temperature
+# Using 365 as the seasonal period since temperature has a strong yearly cycle
+temp_ts <- msts(daily_data$daily_temp, seasonal.periods = 365, start = c(2005, 1))
+
+# Fit an ARIMA model to the temperature data
+fit_temp <- auto.arima(temp_ts)
+# Forecast the temperature for the next 31 days (July 2011)
+forecast_temp <- forecast(fit_temp, h = 31)
+# Extract the forecasted temperature values as a numeric vector
+future_temp <- as.numeric(forecast_temp$mean)
+
+
+# Forecast the electricity load using the predicted temperatures (ARIMAX)
+# Convert full_ts to a simple weekly time series to prevent the auto.arima multi-seasonality error.
+# The 'daily_temp' external regressor will naturally capture the yearly (365-day) seasonality.
+full_ts_weekly <- ts(daily_data$daily_avg, frequency = 7)
+
+# Fit an ARIMAX model using the weekly ts and historical temperature as an external regressor (xreg)
+fit_arimax_full <- auto.arima(full_ts_weekly, xreg = daily_data$daily_temp)
+
+# Forecast the load for July 2011 using the predicted July temperatures as the future xreg
+forecast_arimax_final <- forecast(fit_arimax_full, xreg = future_temp, h = 31)
+
+# Save the final predictions to a CSV file for Kaggle submission
+submission <- read.csv("submission_template.csv")
+submission$load <- as.numeric(forecast_arimax_final$mean)
+write.csv(submission, "model 7 submission.csv", row.names = FALSE)
+print("Saved model 7 submission.csv")
+```
+
+## Model 8: Prophet
+
