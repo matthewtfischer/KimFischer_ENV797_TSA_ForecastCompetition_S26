@@ -140,11 +140,32 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 
 # 3. Top 5 Models
 
-
-
 # APPENDIX. Forecast Models and Scores
 
-## Model 1 : TBATS 
+## Score Summary
+
+| Model Number | Model Description | Score on Kaggle | Rank |
+|:-----------------|:-----------------|:-----------------|:-----------------|
+| **Model 1** | TBATS | 0.1021 |  **TOP 4**  |
+| **Model 2** | STLF-ARIMA | 0.1315 |  |
+| **Model 3** | STLF + ETS | 0.1330 |  |
+| **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 |  |
+| **Model 4-2** | ARIMA + Fourier terms (K = c(3,15)) | 1.4840 |  |
+| **Model 4-3** | ARIMA + Fourier terms (K = c(2,5)) | 0.1469 |  |
+| **Model 5** | NNAR | 0.1770 |  |
+| **Model 6** | Ensemble Model (Averaging best outputs) | 0.1211 |  |
+| **Model 7** | ARIMAX with temperature forecast | 0.2172 |  |
+| **Model 8** | Prophet | 0.0973 | **TOP 3** |
+| **Model 9** | Prophet + Temp data | 0.1052 | **TOP 5** |
+| **Model 10** | Prophet + ARIMAX | 0.1488 |  |
+| **Model 11** | Prophet + US Holiday | 0.0971 | **TOP 2** |
+| **Model 12** | Prophet + US Holiday + Parameter tuning | **0.0966** | **TOP 1** |
+| **Model 13** | Weighted Ensemble (Tuned Prophet + Base Prophet) | **0.0966** | **TOP 1** |
+| **Model 14** | Prophet + US Holiday + Conditional Seasonality | **0.0966** | **TOP 1** |
+| **Model 15** | NNAR + Temperature | 0.1287 |  |
+
+## Model 1 : TBATS
+
 Score on Kaggle: 0.1021
 
 ```{r model1, message=FALSE, warning=FALSE}
@@ -163,7 +184,8 @@ print("Saved model 1 submission.csv")
 ```
 
 ## Model 2: STLF-ARIMA
-Score on Kaggle:  0.1315
+
+Score on Kaggle: 0.1315
 
 ```{r model2, message=FALSE, warning=FALSE}
 # --- Model 2: STLF (with ARIMA) Final Forecast ---
@@ -176,6 +198,7 @@ print("Saved model 2 submission.csv")
 ```
 
 ## Model 3: STLF + ETS
+
 Score on Kaggle: 0.1330
 
 ```{r model 3, message=FALSE, warning=FALSE}
@@ -188,6 +211,7 @@ print("Saved model 3 submission.csv")
 ```
 
 ## Model 4-1: ARIMA + Fourier terms using K = c(3,10)
+
 Score on Kaggle: 0.1350
 
 ```{r}
@@ -202,6 +226,7 @@ print("Saved model 4-1 submission.csv")
 ```
 
 ## Model 4-2: ARIMA + Fourier terms using K = c(3,15)
+
 Score on Kaggle: 1.484
 
 ```{r}
@@ -216,6 +241,7 @@ print("Saved model 4-2 submission.csv")
 ```
 
 ## Model 4-3: ARIMA + Fourier terms using K = c(2,5)
+
 Score on Kaggle: 0.1469
 
 ```{r}
@@ -230,6 +256,7 @@ print("Saved model 4-3 submission.csv")
 ```
 
 ## Model 5: NNAR
+
 Score on Kaggle: 0.1770
 
 ```{r}
@@ -243,6 +270,7 @@ print("Saved model 5 submission.csv")
 ```
 
 ## Model 6: Ensemble Model (Averaging the best outputs)
+
 Score on Kaggle: 0.1211
 
 ```{r}
@@ -257,6 +285,7 @@ print("Saved model 6 submission.csv")
 ```
 
 ## Model 7: ARIMAX with temperature forecast
+
 Score on Kaggle: 0.2172
 
 ```{r arimax_with_temp_forecast, message=FALSE, warning=FALSE}
@@ -292,6 +321,7 @@ print("Saved model 7 submission.csv")
 ```
 
 ## Model 8: Prophet
+
 Score on Kaggle: 0.0973
 
 ```{r prophet_model, message=FALSE, warning=FALSE}
@@ -344,6 +374,7 @@ prophet_plot_components(m, forecast_prophet)
 ```
 
 ## Model 9: Prophet + Temp data
+
 Score on Kaggle: 0.1052
 
 ```{r prophet_with_regressor, message=FALSE, warning=FALSE}
@@ -383,6 +414,7 @@ print("Saved model 9 submission.csv")
 ```
 
 ## Model 10: Prophet + ARIMAX
+
 Score on Kaggle: 0.1488
 
 ```{r}
@@ -395,6 +427,7 @@ print("Saved model 10 submission.csv")
 ```
 
 ## Model 11: Prophet + US Holiday
+
 Score on Kaggle: 0.0971
 
 ```{r prophet_with_holidays_only, message=FALSE, warning=FALSE}
@@ -432,6 +465,7 @@ print("Saved model 11 submission.csv")
 ```
 
 ## Model 12: Prophet + US Holiday + Parameter tuning
+
 Score on Kaggle: 0.0966
 
 ```{r prophet_tuned, message=FALSE, warning=FALSE}
@@ -461,7 +495,8 @@ print("Saved model 12 submission.csv")
 ```
 
 ## Model 13: Weighted Ensemble (Tuned Prophet + Base Prophet)
-Score on Kaggle: 0.966
+
+Score on Kaggle: 0.0966
 
 ```{r final_weighted_ensemble, message=FALSE, warning=FALSE}
 # Model A (Rank 1): Tuned Prophet + Holidays (70% weight)
@@ -481,6 +516,7 @@ print("Saved model 13 submission.csv")
 ```
 
 ## Model 14: Prophet + US Holiday + Conditional Seasonality
+
 Score on Kaggle: 0.0966
 
 ```{r prophet_conditional, message=FALSE, warning=FALSE}
@@ -533,6 +569,7 @@ print("Saved model 14 submission.csv")
 ```
 
 ## Model 15: NNAR + Temperature
+
 Score on Kaggle: 0.1287
 
 ```{r nnar_with_temperature, message=FALSE, warning=FALSE}
@@ -558,4 +595,3 @@ write.csv(submission, "model 15 submission.csv", row.names = FALSE)
 
 print("Saved model 15 submission.csv")
 ```
-
