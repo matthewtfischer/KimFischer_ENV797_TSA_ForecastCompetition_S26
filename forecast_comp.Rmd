@@ -140,13 +140,15 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 
 # 3. Top 5 Models
 
+(Please look at the Score summary board)
+
 # APPENDIX. Forecast Models and Scores
 
 ## Score Summary
 
 | Model Number | Model Description | Score on Kaggle | Rank |
 |:-----------------|:-----------------|:-----------------|:-----------------|
-| **Model 1** | TBATS | 0.1021 |  **TOP 4**  |
+| **Model 1** | TBATS | 0.1021 | **TOP 4** |
 | **Model 2** | STLF-ARIMA | 0.1315 |  |
 | **Model 3** | STLF + ETS | 0.1330 |  |
 | **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 |  |
