@@ -431,7 +431,7 @@ write.csv(submission, "model 11 submission.csv", row.names = FALSE)
 print("Saved model 11 submission.csv")
 ```
 
-## Model 12: Prophet + Parameter tuning
+## Model 12: Prophet + US Holiday + Parameter tuning
 Score on Kaggle: 0.0966
 
 ```{r prophet_tuned, message=FALSE, warning=FALSE}
@@ -460,7 +460,7 @@ write.csv(submission, "model 12 submission.csv", row.names = FALSE)
 print("Saved model 12 submission.csv")
 ```
 
-## Model 13: Top 2 Weighted Ensemble
+## Model 13: Weighted Ensemble (Tuned Prophet + Base Prophet)
 Score on Kaggle: 0.966
 
 ```{r final_weighted_ensemble, message=FALSE, warning=FALSE}
@@ -479,3 +479,83 @@ submission$load <- weighted_ensemble_preds
 write.csv(submission, "model 13 submission.csv", row.names = FALSE)
 print("Saved model 13 submission.csv")
 ```
+
+## Model 14: Prophet + US Holiday + Conditional Seasonality
+Score on Kaggle: 0.0966
+
+```{r prophet_conditional, message=FALSE, warning=FALSE}
+library(lubridate)
+
+# 1. Prepare data and add conditional columns for Summer vs. Other seasons
+df_prophet_ultimate <- data.frame(
+  ds = daily_data$date, 
+  y = daily_data$daily_avg
+)
+
+# Define 'Summer' as June, July, August, and September
+df_prophet_ultimate$is_summer <- month(df_prophet_ultimate$ds) %in% c(6, 7, 8, 9)
+df_prophet_ultimate$is_other <- !df_prophet_ultimate$is_summer
+
+# 2. Initialize the Prophet model with Tuned Hyperparameters
+# Turn OFF default weekly seasonality because we will define custom conditional ones.
+m_ultimate <- prophet(yearly.seasonality = 15,          # Tuned parameter
+                      weekly.seasonality = FALSE,       # Disabled for custom setup
+                      daily.seasonality = FALSE,
+                      changepoint.prior.scale = 0.1)    # Tuned parameter
+
+# Add US country holidays
+m_ultimate <- add_country_holidays(m_ultimate, country_name = 'US')
+
+# 3. Add Custom Conditional Seasonalities
+# This allows the model to learn a different weekly pattern for summer vs other months.
+m_ultimate <- add_seasonality(m_ultimate, name = 'summer_weekly', period = 7, 
+                              fourier.order = 3, condition.name = 'is_summer')
+m_ultimate <- add_seasonality(m_ultimate, name = 'other_weekly', period = 7, 
+                              fourier.order = 3, condition.name = 'is_other')
+m_ultimate <- fit.prophet(m_ultimate, df_prophet_ultimate)
+
+
+# 4. Create future dataframe for July 2011 (31 days) and apply conditions
+future_ultimate <- make_future_dataframe(m_ultimate, periods = 31)
+future_ultimate$is_summer <- month(future_ultimate$ds) %in% c(6, 7, 8, 9)
+future_ultimate$is_other <- !future_ultimate$is_summer
+
+# 5. Generate the final forecast
+print("Forecasting with Ultimate Prophet...")
+forecast_ultimate <- predict(m_ultimate, future_ultimate)
+
+# 6. Extract predictions and save to CSV
+prophet_ultimate_preds <- tail(forecast_ultimate$yhat, 31)
+submission$load <- prophet_ultimate_preds
+write.csv(submission, "model 14 submission.csv", row.names = FALSE)
+
+print("Saved model 14 submission.csv")
+```
+
+## Model 15: NNAR + Temperature
+Score on Kaggle: 0.1287
+
+```{r nnar_with_temperature, message=FALSE, warning=FALSE}
+# Load necessary library
+library(forecast)
+
+# 1. Convert historical load to a simple time series object (Weekly frequency)
+ts_load <- ts(daily_data$daily_avg, frequency = 7)
+
+# 2. Fit the Neural Network Auto-Regression (NNAR) model
+# We use historical daily temperature as an external regressor (xreg)
+
+# The set.seed ensures the neural network initializes the same way every time
+set.seed(123) 
+fit_nnar_temp <- nnetar(ts_load, xreg = daily_data$daily_temp)
+
+# 3. Forecast the next 31 days using the forecasted July temperatures
+forecast_nnar_temp <- forecast(fit_nnar_temp, xreg = future_temp, h = 31)
+
+# 4. Extract predictions and save to CSV
+submission$load <- as.numeric(forecast_nnar_temp$mean)
+write.csv(submission, "model 15 submission.csv", row.names = FALSE)
+
+print("Saved model 15 submission.csv")
+```
+
