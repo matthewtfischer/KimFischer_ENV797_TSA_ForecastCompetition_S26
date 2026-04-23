@@ -140,7 +140,7 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 
 # 3. Top 5 Models: Analysis and Model Selection
 
-In the comprehensive modeling phase of this project, we evaluated 19 distinct time series forecasting approaches, ranging from traditional statistical methods (TBATS, STLF-ARIMA) to machine learning techniques (NNAR, Prophet). Across all experiments, the Facebook Prophet framework consistently demonstrated superior predictive accuracy for the daily electricity load. (Please refer to the appendix for the score summary board and the complete code and performance evaluation of all models.)
+In the comprehensive modeling phase of this project, we evaluated 19 distinct time series forecasting approaches, ranging from traditional statistical methods (TBATS, STLF-ARIMA) to machine learning techniques (NNAR, Prophet). Across all experiments, the Facebook Prophet framework consistently demonstrated superior predictive accuracy for the daily electricity load, ultimately securing all Top 5 positions (Please refer to the appendix for the score summary board and the complete code and performance evaluation of all models.)
 
 Our baseline Prophet model (Model 8, Rank 5) provided a strong starting point, but we observed immediate improvements by incorporating deterministic calendar events, specifically US Holidays (Model 11, Rank 4). Since industrial and commercial electricity consumption drops significantly during holidays like Independence Day, allowing the model to account for these anomalies inherently reduced forecasting errors. From there, applying targeted hyperparameter tuning further optimized our predictions (Models 12, 13, and 14, tied for Rank 3). Specifically, we increased the flexibility of the yearly seasonality (yearly.seasonality = 15) and adjusted the trend flexibility by setting changepoint.prior.scale = 0.1. This adjustment allowed the model to adapt more rapidly to recent trend shifts in the load data.
 
@@ -153,29 +153,28 @@ Interestingly, our experiments revealed that incorporating external weather regr
 ## Score Summary
 
 | Model Number | Model Description | Score on Kaggle | Rank |
-| :--- | :--- | :--- | :--- |
-| **Model 1** | TBATS | 0.1021 | |
-| **Model 2** | STLF-ARIMA | 0.1315 | |
-| **Model 3** | STLF + ETS | 0.1330 | |
-| **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 | |
-| **Model 4-2** | ARIMA + Fourier terms (K = c(3,15)) | 1.4840 | |
-| **Model 4-3** | ARIMA + Fourier terms (K = c(2,5)) | 0.1469 | |
-| **Model 5** | NNAR | 0.1770 | |
-| **Model 6** | Ensemble Model (Averaging best outputs) | 0.1211 | |
-| **Model 7** | ARIMAX with temperature forecast | 0.2172 | |
-| **Model 8** | Prophet | 0.0973 | 🏆 **TOP 5** |
-| **Model 9** | Prophet + Temp data | 0.1052 | |
-| **Model 10** | Prophet + ARIMAX | 0.1488 | |
-| **Model 11** | Prophet + US Holiday | 0.0971 | 🏆 **TOP 4** |
-| **Model 12** | Prophet + US Holiday + Parameter tuning | 0.0966 | 🏆 **TOP 3** |
-| **Model 13** | Weighted Ensemble (Tuned Prophet + Base Prophet) | 0.0966 | 🏆 **TOP 3** |
-| **Model 14** | Prophet + US Holiday + Conditional Seasonality | 0.0966 | 🏆 **TOP 3** |
-| **Model 15** | NNAR + Temperature | 0.1287 | |
-| **Model 16** | Prophet + US Holiday + Multiplicative Seasonality | 0.0964 | 🏆 **TOP 2** |
-| **Model 17** | Prophet + US Holiday + Multiplicative + Conditional Seasonality | **0.0963** | 🏆 **TOP 1** |
-| **Model 18** | Prophet + Holiday + Multiplicative + Temp + Humid | 0.1057 | |
-| **Model 19** | Prophet + Holiday + Multi + Cond + Temp + Humid | 0.1063 | |
-
+|:-----------------|:-----------------|:-----------------|:-----------------|
+| **Model 1** | TBATS | 0.1021 |  |
+| **Model 2** | STLF-ARIMA | 0.1315 |  |
+| **Model 3** | STLF + ETS | 0.1330 |  |
+| **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 |  |
+| **Model 4-2** | ARIMA + Fourier terms (K = c(3,15)) | 1.4840 |  |
+| **Model 4-3** | ARIMA + Fourier terms (K = c(2,5)) | 0.1469 |  |
+| **Model 5** | NNAR | 0.1770 |  |
+| **Model 6** | Ensemble Model (Averaging best outputs) | 0.1211 |  |
+| **Model 7** | ARIMAX with temperature forecast | 0.2172 |  |
+| **Model 8** | Prophet | 0.0973 |  **TOP 5** |
+| **Model 9** | Prophet + Temp data | 0.1052 |  |
+| **Model 10** | Prophet + ARIMAX | 0.1488 |  |
+| **Model 11** | Prophet + US Holiday | 0.0971 |  **TOP 4** |
+| **Model 12** | Prophet + US Holiday + Parameter tuning | 0.0966 |  **TOP 3** |
+| **Model 13** | Weighted Ensemble (Tuned Prophet + Base Prophet) | 0.0966 |  **TOP 3** |
+| **Model 14** | Prophet + US Holiday + Conditional Seasonality | 0.0966 |  **TOP 3** |
+| **Model 15** | NNAR + Temperature | 0.1287 |  |
+| **Model 16** | Prophet + US Holiday + Multiplicative Seasonality | 0.0964 |  **TOP 2** |
+| **Model 17** | Prophet + US Holiday + Multiplicative + Conditional Seasonality | **0.0963** |  **TOP 1** |
+| **Model 18** | Prophet + Holiday + Multiplicative + Temp + Humid | 0.1057 |  |
+| **Model 19** | Prophet + Holiday + Multi + Cond + Temp + Humid | 0.1063 |  |
 
 ## Model 1 : TBATS
 
