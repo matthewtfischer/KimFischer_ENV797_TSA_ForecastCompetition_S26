@@ -11,15 +11,11 @@ editor_options:
 
 ## Setting R code chunk options
 
-First R code chunk is used for setting the options for all R code chunks. The choice echo=TRUE means both code and output will appear on report, include = FALSE neither code nor output is printed.
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,tidy.opts=list(width.cutoff=80), tidy=FALSE) 
 ```
 
 ## Loading packages and initializing
-
-Second R code chunk is for loading packages. By setting message = FALSE, the code will appear but not the output.
 
 ```{r package, message=FALSE}
 library(lubridate)
