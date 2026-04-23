@@ -138,33 +138,44 @@ valid_ts <- msts(valid_data$daily_avg, seasonal.periods = c(7, 365), start = c(2
 # 182 represents the approximate day of the year for July 1st
 ```
 
-# 3. Top 5 Models
+# 3. Top 5 Models: Analysis and Model Selection
 
-(Please look at the Score summary board)
+In the comprehensive modeling phase of this project, we evaluated 19 distinct time series forecasting approaches, ranging from traditional statistical methods (TBATS, STLF-ARIMA) to machine learning techniques (NNAR, Prophet). Across all experiments, the Facebook Prophet framework consistently demonstrated superior predictive accuracy for the daily electricity load. (Please refer to the appendix for the score summary board and the complete code and performance evaluation of all models.)
+
+Our baseline Prophet model (Model 8, Rank 5) provided a strong starting point, but we observed immediate improvements by incorporating deterministic calendar events, specifically US Holidays (Model 11, Rank 4). Since industrial and commercial electricity consumption drops significantly during holidays like Independence Day, allowing the model to account for these anomalies inherently reduced forecasting errors. From there, applying targeted hyperparameter tuning further optimized our predictions (Models 12, 13, and 14, tied for Rank 3). Specifically, we increased the flexibility of the yearly seasonality (yearly.seasonality = 15) and adjusted the trend flexibility by setting changepoint.prior.scale = 0.1. This adjustment allowed the model to adapt more rapidly to recent trend shifts in the load data.
+
+The most critical breakthrough in our modeling strategy was the transition from additive to multiplicative seasonality. In electricity demand, the amplitude of seasonal fluctuations (especially during peak summer cooling periods) tends to grow proportionally with the overall trend. By changing the seasonality mode to multiplicative (Model 16, Rank 2) and combining it with conditional weekly seasonality to separate summer and non-summer behavioral patterns, we achieved our best-performing model: Model 17 (Rank 1, Score: 0.0963).
+
+Interestingly, our experiments revealed that incorporating external weather regressors (temperature and humidity forecasts) degraded model performance (e.g., Models 18 and 19). Because the weather variables for July 2011 had to be forecasted themselves, they introduced additional uncertainty and noise into the final load prediction. Consequently, our optimal strategy relied strictly on robust historical load patterns, explicit holiday effects, and dynamic seasonal structures without external weather dependencies.
 
 # APPENDIX. Forecast Models and Scores
 
 ## Score Summary
 
 | Model Number | Model Description | Score on Kaggle | Rank |
-|:-----------------|:-----------------|:-----------------|:-----------------|
-| **Model 1** | TBATS | 0.1021 | **TOP 4** |
-| **Model 2** | STLF-ARIMA | 0.1315 |  |
-| **Model 3** | STLF + ETS | 0.1330 |  |
-| **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 |  |
-| **Model 4-2** | ARIMA + Fourier terms (K = c(3,15)) | 1.4840 |  |
-| **Model 4-3** | ARIMA + Fourier terms (K = c(2,5)) | 0.1469 |  |
-| **Model 5** | NNAR | 0.1770 |  |
-| **Model 6** | Ensemble Model (Averaging best outputs) | 0.1211 |  |
-| **Model 7** | ARIMAX with temperature forecast | 0.2172 |  |
-| **Model 8** | Prophet | 0.0973 | **TOP 3** |
-| **Model 9** | Prophet + Temp data | 0.1052 | **TOP 5** |
-| **Model 10** | Prophet + ARIMAX | 0.1488 |  |
-| **Model 11** | Prophet + US Holiday | 0.0971 | **TOP 2** |
-| **Model 12** | Prophet + US Holiday + Parameter tuning | **0.0966** | **TOP 1** |
-| **Model 13** | Weighted Ensemble (Tuned Prophet + Base Prophet) | **0.0966** | **TOP 1** |
-| **Model 14** | Prophet + US Holiday + Conditional Seasonality | **0.0966** | **TOP 1** |
-| **Model 15** | NNAR + Temperature | 0.1287 |  |
+| :--- | :--- | :--- | :--- |
+| **Model 1** | TBATS | 0.1021 | |
+| **Model 2** | STLF-ARIMA | 0.1315 | |
+| **Model 3** | STLF + ETS | 0.1330 | |
+| **Model 4-1** | ARIMA + Fourier terms (K = c(3,10)) | 0.1350 | |
+| **Model 4-2** | ARIMA + Fourier terms (K = c(3,15)) | 1.4840 | |
+| **Model 4-3** | ARIMA + Fourier terms (K = c(2,5)) | 0.1469 | |
+| **Model 5** | NNAR | 0.1770 | |
+| **Model 6** | Ensemble Model (Averaging best outputs) | 0.1211 | |
+| **Model 7** | ARIMAX with temperature forecast | 0.2172 | |
+| **Model 8** | Prophet | 0.0973 | 🏆 **TOP 5** |
+| **Model 9** | Prophet + Temp data | 0.1052 | |
+| **Model 10** | Prophet + ARIMAX | 0.1488 | |
+| **Model 11** | Prophet + US Holiday | 0.0971 | 🏆 **TOP 4** |
+| **Model 12** | Prophet + US Holiday + Parameter tuning | 0.0966 | 🏆 **TOP 3** |
+| **Model 13** | Weighted Ensemble (Tuned Prophet + Base Prophet) | 0.0966 | 🏆 **TOP 3** |
+| **Model 14** | Prophet + US Holiday + Conditional Seasonality | 0.0966 | 🏆 **TOP 3** |
+| **Model 15** | NNAR + Temperature | 0.1287 | |
+| **Model 16** | Prophet + US Holiday + Multiplicative Seasonality | 0.0964 | 🏆 **TOP 2** |
+| **Model 17** | Prophet + US Holiday + Multiplicative + Conditional Seasonality | **0.0963** | 🏆 **TOP 1** |
+| **Model 18** | Prophet + Holiday + Multiplicative + Temp + Humid | 0.1057 | |
+| **Model 19** | Prophet + Holiday + Multi + Cond + Temp + Humid | 0.1063 | |
+
 
 ## Model 1 : TBATS
 
@@ -793,4 +804,3 @@ write.csv(submission, "model 19 submission.csv", row.names = FALSE)
 
 print("Saved model 19 submission.csv")
 ```
-
