@@ -639,7 +639,7 @@ print("Saved model 16 submission.csv")
 
 Score on Kaggle: 0.0963
 
-```{r prophet_with_holidays_and_multiplicative_seasonality, message=FALSE, warning=FALSE}
+```{r prophet_with_holidays_and_multiplicative_and_conditional_seasonality, message=FALSE, warning=FALSE}
 # 1. Prepare data with summer/other condition flags
 df_prophet_multi_cond <- data.frame(
   ds = daily_data$date,
@@ -686,7 +686,7 @@ print("Saved model 17 submission.csv")
 
 ## Model 18: Prophet + US Holiday + Multiplicative Seasonality + Temp + Humidity Regressors
 
-Score on Kaggle: TBD
+Score on Kaggle: 0.1057
 
 ```{r prophet_with_holidays_and_multiplicative_seasonality_and_regressors, message=FALSE, warning=FALSE}
 # 1. Forecast humidity
@@ -728,7 +728,7 @@ future_weather$humid <- c(daily_data$daily_humid, future_humid)
 
 forecast_weather <- predict(m_weather, future_weather)
 
-# 7. Extract and Save
+# 5. Extract and Save
 prophet_weather_preds <- tail(forecast_weather$yhat, 31)
 
 submission$load <- prophet_weather_preds
@@ -737,4 +737,60 @@ write.csv(submission, "model 18 submission.csv", row.names = FALSE)
 print("Saved model 18 submission.csv")
 ```
 
+## Model 19: Prophet + US Holiday + Multiplicative Seasonality + Conditional Seasonality + Temp + Humidity Regressors
+
+Score on Kaggle: 0.1063
+
+```{r prophet_with_holidays_and_multiplicative_and_conditional_seasonality_and_regressors, message=FALSE, warning=FALSE}
+# 1. Prepare data with seasonal condition flags
+df_prophet_weather_cond <- data.frame(
+  ds = daily_data$date,
+  y = daily_data$daily_avg,
+  temp  = daily_data$daily_temp,
+  humid = daily_data$daily_humid
+)
+df_prophet_weather_cond$is_summer <- month(df_prophet_weather_cond$ds) %in% c(6, 7, 8, 9)
+df_prophet_weather_cond$is_other <- !df_prophet_weather_cond$is_summer
+
+# 2. Initialize Prophet with multiplicative seasonality + tuned params + no default weekly
+m_weather_cond <- prophet(
+  yearly.seasonality = 15,
+  weekly.seasonality = FALSE,
+  daily.seasonality = FALSE,
+  seasonality.mode = 'multiplicative',
+  changepoint.prior.scale = 0.1
+)
+
+# Add US holidays
+m_weather_cond <- add_country_holidays(m_weather_cond, country_name = 'US')
+
+# Add conditional weekly seasonality
+m_weather_cond <- add_seasonality(m_weather_cond, name = 'summer_weekly', period = 7,
+                                  fourier.order = 3, condition.name = 'is_summer')
+m_weather_cond <- add_seasonality(m_weather_cond, name = 'other_weekly',  period = 7,
+                                  fourier.order = 3, condition.name = 'is_other')
+
+# Add weather regressors
+m_weather_cond <- add_regressor(m_weather_cond, 'temp',  standardize = TRUE)
+m_weather_cond <- add_regressor(m_weather_cond, 'humid', standardize = TRUE)
+
+# 3. Fit and Predict
+m_weather_cond <- fit.prophet(m_weather_cond, df_prophet_weather_cond)
+
+future_weather_cond <- make_future_dataframe(m_weather_cond, periods = 31)
+future_weather_cond$is_summer <- month(future_weather_cond$ds) %in% c(6, 7, 8, 9)
+future_weather_cond$is_other  <- !future_weather_cond$is_summer
+future_weather_cond$temp <- c(daily_data$daily_temp,  future_temp)
+future_weather_cond$humid <- c(daily_data$daily_humid, future_humid)
+
+forecast_weather_cond <- predict(m_weather_cond, future_weather_cond)
+
+# 4. Extract and Save
+prophet_weather_cond_preds <- tail(forecast_weather_cond$yhat, 31)
+
+submission$load <- prophet_weather_cond_preds
+write.csv(submission, "model 19 submission.csv", row.names = FALSE)
+
+print("Saved model 19 submission.csv")
+```
 
